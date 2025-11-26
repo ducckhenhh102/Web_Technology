@@ -1,0 +1,123 @@
+[
+    {
+        "question": "Thành phần nào sau đây KHÔNG phải là một thành phần giao diện người dùng (UI) trong Android?",
+        "options": {
+            "A": "TextView",
+            "B": "Button",
+            "C": "Service",
+            "D": "ImageView"
+        },
+        "answer": ["C"]
+    },
+    {
+        "question": "Layout nào thường được sử dụng để sắp xếp các thành phần UI theo chiều dọc hoặc chiều ngang?",
+        "options": {
+            "A": "RelativeLayout",
+            "B": "LinearLayout",
+            "C": "FrameLayout",
+            "D": "ConstraintLayout"
+        },
+        "answer": ["B"]
+    },
+    {
+        "question": "Intent trong Android được sử dụng để làm gì?",
+        "options": {
+            "A": "Hiển thị thông báo cho người dùng.",
+            "B": "Lưu trữ dữ liệu.",
+            "C": "Khởi chạy Activity.",
+            "D": "Xử lý sự kiện chạm."
+        },
+        "answer": ["C"]
+    },
+    {
+        "question": "Vòng đời của một Activity bắt đầu bằng phương thức nào?",
+        "options": {
+            "A": "onStart()",
+            "B": "onResume()",
+            "C": "onCreate()",
+            "D": "onPause()"
+        },
+        "answer": ["C"]
+    },
+    {
+        "question": "Để xử lý sự kiện click chuột cho một Button, bạn cần sử dụng phương thức nào?",
+        "options": {
+            "A": "onClick()",
+            "B": "onTouch()",
+            "C": "onLongClick()",
+            "D": "onFocusChange()"
+        },
+        "answer": ["A"]
+    },
+    {
+        "question": "Kiểu dữ liệu nào sau đây được sử dụng để lưu trữ giá trị đúng hoặc sai?",
+        "options": {
+            "A": "int",
+            "B": "float",
+            "C": "String",
+            "D": "boolean"
+        },
+        "answer": ["D"]
+    },
+    {
+        "question": "SharedPreferences trong Android được sử dụng để làm gì?",
+        "options": {
+            "A": "Lưu trữ dữ liệu có cấu trúc.",
+            "B": "Truy cập cơ sở dữ liệu SQLite.",
+            "C": "Lưu trữ dữ liệu dạng key-value.",
+            "D": "Gửi dữ liệu qua mạng."
+        },
+        "answer": ["C"]
+    },
+    {
+        "question": "Toast trong Android được sử dụng để làm gì?",
+        "options": {
+            "A": "Hiển thị một hộp thoại.",
+            "B": "Hiển thị một thông báo ngắn gọn cho người dùng.",
+            "C": "Phát nhạc.",
+            "D": "Chụp ảnh màn hình."
+        },
+        "answer": ["B"]
+    },
+    {
+        "question": "Để tạo một ứng dụng Android, bạn cần sử dụng ngôn ngữ lập trình nào? (Chọn nhiều)",
+        "options": {
+            "A": "C++",
+            "B": "Python",
+            "C": "Java",
+            "D": "Kotlin"
+        },
+        "answer": ["C", "D"]
+    },
+    {
+        "question": "Adapter trong Android được sử dụng để làm gì?",
+        "options": {
+            "A": "Kết nối dữ liệu với ListView hoặc RecyclerView.",
+            "B": "Tạo hiệu ứng động.",
+            "C": "Xử lý sự kiện cảm ứng.",
+            "D": "Lưu trữ dữ liệu."
+        },
+        "answer": ["A"]
+    },
+    {
+        "question": "Những thành phần nào sau đây có thể được sử dụng để hiển thị danh sách trong Android? (Chọn 2 đáp án)",
+        "options": {
+            "A": "TextView",
+            "B": "ListView",
+            "C": "ImageView",
+            "D": "RecyclerView"
+        },
+        "answer": ["B", "D"]
+    },
+    {
+        "question": "Những phương thức nào sau đây thuộc vòng đời của một Activity? (Chọn 3 đáp án)",
+        "options": {
+            "A": "onCreate()",
+            "B": "onClick()",
+            "C": "onStart()",
+            "D": "onResume()",
+            "E": "onDestroy()"
+        },
+        "answer": ["A", "C", "D", "E"]
+    }
+]
