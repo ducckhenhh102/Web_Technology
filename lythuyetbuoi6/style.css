@@ -1,0 +1,91 @@
+/* Reset cơ bản */
+* { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+
+body {
+    background-color: #f4f6f9;
+    margin: 0; padding: 40px;
+    display: flex; justify-content: center;
+}
+
+/* Khung nội dung chung */
+.container {
+    background-color: white;
+    width: 100%; max-width: 600px;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: #333; text-align: center;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px; margin-top: 0;
+}
+
+/* Nút bấm chung */
+.btn-add {
+    display: block; width: 100%;
+    background-color: #007bff; color: white;
+    text-align: center; padding: 12px;
+    text-decoration: none; border-radius: 6px;
+    font-weight: bold; margin-bottom: 20px;
+    transition: 0.2s; border: none; cursor: pointer;
+    font-size: 16px;
+}
+.btn-add:hover { background-color: #0056b3; }
+
+/* --- Style cho INDEX.PHP (Danh sách) --- */
+.book-list {
+    list-style-type: none; /* Bỏ dấu chấm đen */
+    padding: 0; margin: 0;
+}
+
+.book-item {
+    background-color: #fff;
+    border: 1px solid #e1e4e8;
+    padding: 15px; margin-bottom: 10px;
+    border-radius: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: 0.2s;
+}
+
+.book-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.book-info { font-size: 15px; color: #666; }
+.book-info strong { color: #333; font-size: 18px; display: block; margin-bottom: 4px; }
+
+.btn-delete {
+    background-color: #fff5f5; color: #dc3545;
+    padding: 8px 15px; text-decoration: none;
+    border-radius: 4px; font-size: 14px;
+    border: 1px solid #ffc9c9; font-weight: 500;
+}
+.btn-delete:hover { background-color: #dc3545; color: white; }
+
+/* --- Style cho ADD_BOOK.PHP (Form) --- */
+form { margin-top: 20px; }
+label { font-weight: 600; color: #444; margin-bottom: 5px; display: block; }
+
+input[type="text"], input[type="number"] {
+    width: 100%; padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc; border-radius: 5px;
+    font-size: 16px;
+}
+input:focus { border-color: #007bff; outline: none; }
+
+input[type="submit"] {
+    /* Kế thừa style của nút add */
+    display: block; width: 100%;
+    background-color: #28a745; color: white;
+    text-align: center; padding: 12px;
+    text-decoration: none; border-radius: 6px;
+    font-weight: bold; margin-bottom: 20px;
+    transition: 0.2s; border: none; cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+input[type="submit"]:hover { background-color: #218838; }
