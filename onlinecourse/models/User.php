@@ -1,57 +1,110 @@
 <?php
+//version 1.2.0
+require_once 'config/Database.php';
+
 class User {
-    private $conn;
-    private $table_name = "users";
+    private $db;
+    private $table = 'users';
 
-    public $id;
-    public $username;
-    public $password;
-    public $role;
-
-    public function __construct($db) {
-        $this->conn = $db;
+    public function __construct() {
+        $this->db = Database::getInstance();
     }
 
-    // Hàm đăng nhập
-    public function login() {
-        // Sử dụng Prepared Statement [cite: 101]
-        $query = "SELECT id, username, password, role FROM " . $this->table_name . " WHERE email = :email LIMIT 0,1";
-        $stmt = $this->conn->prepare($query);
+    // ========================================== 
+    // KHU VỰC DÀNH CHO HỌC VIÊN (AUTH & USER)
+    // ==========================================
+  
+    // Đăng nhập cho học viên (role = 0)
+    public function studentRegister($username, $email, $password, $fullname, $role) {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // Làm sạch dữ liệu
-        $this->email = htmlspecialchars(strip_tags($this->email));
-        $stmt->bindParam(':email', $this->email);
+        $sql = "INSERT INTO users(username, email, password, fullname, role) VALUES(?, ?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$username, $email, $hashed_password, $fullname, $role]);
+    }
+
+    // Check user bằng email
+    public function getUserByEmail($email) {
+        $sql = "SELECT * FROM users WHERE email = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$email]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Check user bằng username
+    public function getUserByUsername($username) {
+        $sql = "SELECT * FROM users WHERE username = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getById($id) {
+        $query = "SELECT * FROM " . $this->table . " WHERE id = :id LIMIT 1";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $id);
         $stmt->execute();
-
-        if ($stmt->rowCount() > 0) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            // Kiểm tra mật khẩu đã mã hóa (bcrypt) [cite: 99]
-            if (password_verify($this->password, $row['password'])) {
-                $this->id = $row['id'];
-                $this->username = $row['username'];
-                $this->role = $row['role'];
-                return true;
-            }
-        }
-        return false;
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Hàm đăng ký (Ví dụ mẫu)
-    public function register() {
-        $query = "INSERT INTO " . $this->table_name . " SET username=:username, email=:email, password=:password, role=0";
-        $stmt = $this->conn->prepare($query);
-
-        // Hash mật khẩu trước khi lưu [cite: 99]
-        $password_hash = password_hash($this->password, PASSWORD_BCRYPT);
-
-        $stmt->bindParam(':username', $this->username);
-        $stmt->bindParam(':email', $this->email);
-        $stmt->bindParam(':password', $password_hash);
-
-        if ($stmt->execute()) {
-            return true;
+    public function updateProfile($id, $fullname, $phone, $bio, $avatar) {
+        if ($avatar) {
+            $query = "UPDATE " . $this->table . " 
+                      SET fullname = :fullname, 
+                          phone = :phone, 
+                          bio = :bio, 
+                          avatar = :avatar 
+                      WHERE id = :id";
+        } 
+        else {
+            $query = "UPDATE " . $this->table . " 
+                      SET fullname = :fullname, 
+                          phone = :phone, 
+                          bio = :bio 
+                      WHERE id = :id";
         }
-        return false;
+
+        $stmt = $this->db->prepare($query);
+
+        // Gán dữ liệu
+        $stmt->bindParam(':fullname', $fullname);
+        $stmt->bindParam(':phone', $phone);
+        $stmt->bindParam(':bio', $bio);
+        $stmt->bindParam(':id', $id);
+        
+        if ($avatar) {
+            $stmt->bindParam(':avatar', $avatar);
+        }
+
+        return $stmt->execute();
+    }
+
+    // ==========================================
+    // KHU VỰC DÀNH CHO QUẢN LÝ (ADMIN)
+    // ==========================================
+
+    // Lấy tất cả user
+    public function getAllUsers() {
+        $stmt = $this->db->prepare("SELECT * FROM " . $this->table . " ORDER BY id DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Đổi trạng thái user
+    public function toggleStatus($id, $status) {
+        $stmt = $this->db->prepare("UPDATE " . $this->table . " SET status = :status WHERE id = :id");
+        $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
+    // Đếm tổng số user
+    public function count() {
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM " . $this->table);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
     }
 }
 ?>

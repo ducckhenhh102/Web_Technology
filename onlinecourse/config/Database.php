@@ -1,26 +1,29 @@
 <?php
+//version 1.2.0 
 class Database {
-    private $host = "localhost";
-    private $db_name = "onlinecourse"; 
-    private $username = "root";
-    private $password = ""; 
+
+    private static $instance = null;
     public $conn;
 
-    public function getConnection() {
-        $this->conn = null;
+    private function __construct() {
+        $servername = "localhost";
+        $username = "root";
+        $password = "";
+        $dbname = "onlinecourse";
 
         try {
-        
-            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name;
-            $this->conn = new PDO($dsn, $this->username, $this->password);
-            $this->conn->exec("set names utf8mb4");
+            $this->conn = new PDO("mysql:host=$servername; dbname=$dbname;charset=utf8", $username, $password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-        } catch(PDOException $exception) {
-            echo "Lỗi kết nối CSDL: " . $exception->getMessage();
+        } catch(PDOException $e) {
+            die("Connection failed: " . $e->getMessage());
         }
+    }
 
-        return $this->conn;
+    public static function getInstance() {
+        if (!self::$instance) {
+            self::$instance = new Database();
+        }
+        return self::$instance->conn;
     }
 }
 ?>

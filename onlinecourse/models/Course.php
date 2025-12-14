@@ -1,0 +1,191 @@
+<?php
+//version 1.2.0
+require_once './config/Database.php';
+
+class Course {
+    private $conn;
+    private $table_name = "courses"; 
+
+    public function __construct() {
+        $this->conn = Database::getInstance();
+    }
+
+    // ================================================================
+    // PHẦN 1: QUẢN TRỊ (ADMIN/INSTRUCTOR) - THÊM SỬA XÓA
+    // ================================================================
+
+    // Tạo khóa học mới
+    public function create($data) {
+        $query = "INSERT INTO " . $this->table_name . " 
+                  (title, description, instructor_id, category_id, price, duration_weeks, level, image)
+                  VALUES (:title, :description, :instructor_id, :category_id, :price, :duration_weeks, :level, :image)";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Làm sạch dữ liệu
+        $data['title'] = htmlspecialchars(strip_tags($data['title']));
+
+        return $stmt->execute([
+            ':title'          => $data['title'],
+            ':description'    => $data['description'],
+            ':instructor_id'  => $data['instructor_id'],
+            ':category_id'    => $data['category_id'],
+            ':price'          => $data['price'],
+            ':duration_weeks' => $data['duration_weeks'],
+            ':level'          => $data['level'],
+            ':image'          => $data['image'],
+        ]);
+    }
+
+    public function getAllCoursesAdmin() {
+        $query = "SELECT 
+                    c.*, 
+                    cat.name as category_name, 
+                    u.fullname as instructor_name
+                  FROM " . $this->table_name . " c  
+                  LEFT JOIN categories cat ON c.category_id = cat.id
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  ORDER BY c.created_at DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function delete($id) {
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
+    // ------------------------------------------------
+    // 2. DÀNH CHO GIẢNG VIÊN (INSTRUCTOR) 
+    // ------------------------------------------------
+
+    // Lấy danh sách khóa học CỦA RIÊNG giảng viên đó
+    public function getCoursesByInstructor($instructorId) {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE instructor_id = :instructor_id 
+                  ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':instructor_id', $instructorId);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Đếm số khóa học của giảng viên
+    public function countByInstructor($instructorId) {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE instructor_id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $instructorId);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
+    }
+
+    
+
+    // ================================================================
+    // PHẦN 3: HIỂN THỊ (FRONTEND) - LẤY DỮ LIỆU
+    // ================================================================
+
+    // 1. Lấy danh sách khóa học MỚI NHẤT
+    public function getNewCourses($limit = 6) {
+        $query = "SELECT c.*, u.fullname as instructor_name 
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  ORDER BY c.created_at DESC 
+                  LIMIT :limit";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // 2. Lấy khóa học NỔI BẬT
+    public function getFeaturedCourses($limit = 3) {
+        $query = "SELECT c.*, u.fullname as instructor_name 
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  ORDER BY c.price DESC 
+                  LIMIT :limit"; 
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // 3. Lấy TẤT CẢ khóa học (Kèm tên giảng viên và danh mục)
+    public function getAllCourses() {
+        $query = "SELECT c.*, u.fullname as instructor_name, cat.name as category_name
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  LEFT JOIN categories cat ON c.category_id = cat.id
+                  ORDER BY c.created_at DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // 4. Lấy CHI TIẾT 1 khóa học theo ID
+    public function getCourseById($id) {
+        $query = "SELECT c.*, u.fullname as instructor_name, cat.name as category_name
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  LEFT JOIN categories cat ON c.category_id = cat.id
+                  WHERE c.id = :id
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // 5. Tìm kiếm khóa học
+    public function searchCourses($keyword) {
+        $query = "SELECT c.*, u.fullname as instructor_name
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  WHERE c.title LIKE :keyword OR c.description LIKE :keyword";
+                  
+        $stmt = $this->conn->prepare($query);
+        
+        $keyword = "%{$keyword}%";
+        $stmt->bindParam(':keyword', $keyword);
+        
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // 6. Lọc khóa học theo category
+    public function getCoursesByCategoryId($categoryId) {
+        // Fix lỗi biến table nếu cần thiết
+        $query = "SELECT 
+                    c.*, 
+                    u.fullname as instructor_name
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN users u ON c.instructor_id = u.id
+                  WHERE c.category_id = :category_id
+                  ORDER BY c.created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+    
+        $stmt->bindParam(':category_id', $categoryId);
+        
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    
+}
+?>
