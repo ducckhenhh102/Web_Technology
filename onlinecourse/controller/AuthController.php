@@ -1,0 +1,188 @@
+<?php
+//version 1.1.3
+require_once "./models/User.php";
+
+class AuthController {
+    
+    private $userModel;
+
+    public function __construct(){
+        $this->userModel = new User();
+        
+        if(session_status() === PHP_SESSION_NONE){
+            session_start();
+        }
+    }
+
+    // --- ĐĂNG NHẬP ---
+    public function login(){
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (isset($_SESSION['user_id'])) {
+            header("Location: index.php?controller=home&action=dashboard");
+            exit();
+        }
+        require "./views/auth/login.php";
+    }
+
+    public function logout(){
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $_SESSION = array();
+
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
+        }
+        session_destroy();
+
+        header("Location: index.php"); 
+        exit();
+    }
+
+    public function handleLogin(){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+            $email = trim($_POST['email'] ?? '');
+            $password = trim($_POST['password'] ?? '');
+
+            $errors = [];
+
+            //validate
+            if(empty($email)){
+                $errors[] = "Vui lòng nhập email!";
+            } else if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+                $errors[] = "Định dạng email không hợp lệ!";
+            }
+
+            if(empty($password)){
+                $errors[] = "Vui lòng nhập mật khẩu!";
+            }
+            
+            if(!empty($errors)){
+                require "./views/auth/login.php";
+                return;
+            }
+
+            $user = $this->userModel->getUserByEmail($email);
+
+            if($user && password_verify($password, $user['password'])){
+
+                if ($user['status'] == 0) {
+                    $errors[] = "Tài khoản đã bị vô hiệu hóa bởi admin!";
+                    require "./views/auth/login.php";
+                    return;
+                }
+                
+                // Lưu session
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['fullname'];
+                $_SESSION['user_role'] = $user['role'];
+                if (!empty($user['avatar'])) {
+                    $_SESSION['user_avatar'] = (strpos($user['avatar'], 'http') === 0) ? $user['avatar'] : "uploads/" . $user['avatar'];
+                } else {
+                    $_SESSION['user_avatar'] = "https://via.placeholder.com/40";
+                }
+
+                switch ($user['role']) {
+                    case 0:
+                        header('Location: index.php?controller=home&action=dashboard');
+                        break;
+                    case 1: 
+                        header('Location: index.php?controller=instructor&action=dashboard');
+                        break;
+                    case 2:
+                        header('Location: index.php?controller=admin&action=dashboard');
+                        break;
+                    default:
+                        header('Location: index.php');
+                }
+                exit; 
+            } else {
+                $errors[] = "Email hoặc mật khẩu không chính xác!";
+                require "./views/auth/login.php";
+            }
+        }
+    }
+
+    // --- ĐĂNG KÝ ---
+    public function register(){
+        require './views/auth/register.php';
+    }
+
+    public function handleRegister(){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+            $userName = trim($_POST['username'] ?? '');
+            $email    = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? ''; 
+            $fullname = trim($_POST['fullname'] ?? '');
+
+            $role = 0;
+
+            $errors = [];
+
+            // Username
+            if (empty($userName)) {
+                $errors[] = "Tên đăng nhập không được để trống.";
+            } else if (strlen($userName) < 4) {
+                $errors[] = "Tên đăng nhập phải có ít nhất 4 ký tự.";
+            } 
+            $existingUser = $this->userModel->getUserByUsername($userName);
+            if ($existingUser) {
+                $errors[] = "Tên đăng nhập '$userName' đã có người sử dụng. Vui lòng chọn tên khác!";
+            }
+
+            // Email
+            if (empty($email)){
+                $errors[] = "Vui lòng nhập email!";
+            } else if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Email không hợp lệ!";
+            } else {
+                // Check trùng email
+                if($this->userModel->getUserByEmail($email)){
+                    $errors[] = "Email này đã được sử dụng!";
+                }
+            }
+
+            // Password
+            if (empty($password)){
+                $errors[] = "Vui lòng nhập mật khẩu!";
+            } else if(strlen($password) < 8){
+                $errors[] = "Mật khẩu phải có ít nhất 8 ký tự!";
+            } elseif (!preg_match("/[a-z]/", $password)){
+                $errors[] = "Mật khẩu phải có ít nhất 1 chữ cái thường!";
+            } elseif (!preg_match("/[A-Z]/", $password)) {
+                $errors[] = "Mật khẩu phải có ít nhất một chữ cái hoa.";
+            } elseif (!preg_match("/[0-9]/", $password)) {
+                $errors[] = "Mật khẩu phải có ít nhất một chữ số.";
+            } elseif (!preg_match("/[!@#$%^&*()\-_=+{};:,<.>]/", $password)) {
+                $errors[] = "Mật khẩu phải chứa ít nhất một ký tự đặc biệt.";
+            }
+
+            // Fullname
+            if (empty($fullname)){
+                $errors[] = "Vui lòng nhập họ tên!";
+            }
+
+            if (!empty($errors)) {
+                require './views/auth/register.php';
+                return; 
+            }
+
+            $isCreated = $this->userModel->studentRegister($userName, $email, $password, $fullname, $role);
+
+            if($isCreated){
+                //thêm sau khi merge
+                header('Location: index.php');
+                exit;
+            } else {
+                $errors[] = 'Lỗi hệ thống, không thể tạo tài khoản lúc này!';
+                require './views/auth/register.php';
+            }
+        }
+    }
+}
+?>
